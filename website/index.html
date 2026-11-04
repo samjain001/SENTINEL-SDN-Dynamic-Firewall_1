@@ -1,0 +1,265 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071426">
+  <meta name="description" content="SENTINEL SDN Network Operations and Security Monitoring Dashboard">
+  <title>SENTINEL | Cybersecurity Command Centre</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/app.js" defer></script>
+  <script src="/topology2d.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="#overview" aria-label="SENTINEL home">
+      <span class="brand-mark">◈</span>
+      <span><strong>SENTINEL</strong><small>NETWORK DEFENCE</small></span>
+    </a>
+
+    <div class="side-caption">COMMAND MENU</div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" href="#overview"><span class="nav-icon">▦</span>Overview</a>
+      <a class="nav-item" href="#topology"><span class="nav-icon">⌘</span>Network topology</a>
+      <a class="nav-item" href="#devices"><span class="nav-icon">▣</span>Device management</a>
+      <a class="nav-item" href="#analytics"><span class="nav-icon">▥</span>Traffic analytics</a>
+      <a class="nav-item" href="#events"><span class="nav-icon">◇</span>Security events</a>
+    </nav>
+
+    <div class="side-caption status-caption">SYSTEM HEALTH</div>
+    <div class="health-list">
+      <div class="health-row"><i class="status-light" id="backendLight"></i><span>Backend API</span><b id="backendState">Checking</b></div>
+      <div class="health-row"><i class="status-light" id="controllerLight"></i><span>SDN Controller</span><b id="controllerState">Checking</b></div>
+      <div class="health-row"><i class="status-light" id="topologyLight"></i><span>Mininet network</span><b id="topologyState">Checking</b></div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <span class="pulse-dot"></span>
+      <b>SENTINEL SECURITY SYSTEM</b>
+      <small>SDN MONITORING PLATFORM</small>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="top-header">
+      <div class="heading-block">
+        <span class="eyebrow">NETWORK INTELLIGENCE PLATFORM</span>
+        <h1>Cybersecurity Command Centre</h1>
+        <p>Live network visibility · traffic inspection · security decisions</p>
+      </div>
+      <div class="header-tools">
+        <div class="clock-card"><small>LOCAL DATE</small><strong id="date">--</strong></div>
+        <div class="clock-card"><small>LOCAL TIME</small><strong id="clock">--:--:--</strong></div>
+        <div class="live-pill"><i></i> LIVE</div>
+      </div>
+    </header>
+
+    <section class="section-block" id="overview">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow">SYSTEM OVERVIEW</span>
+          <h2>Network at a glance</h2>
+        </div>
+        <span class="live-note"><i></i> UPDATING LIVE</span>
+      </div>
+
+      <div class="stats-grid">
+        <article class="stat-card">
+          <div class="stat-heading"><span>TOTAL MESSAGES</span><span class="stat-symbol cyan">⇄</span></div>
+          <strong id="totalMessages">0</strong>
+          <small>Recorded network traffic</small>
+        </article>
+        <article class="stat-card">
+          <div class="stat-heading"><span>ALLOWED TRAFFIC</span><span class="stat-symbol green">✓</span></div>
+          <strong class="green-text" id="allowedMessages">0</strong>
+          <small>Permitted messages</small>
+        </article>
+        <article class="stat-card">
+          <div class="stat-heading"><span>BLOCKED TRAFFIC</span><span class="stat-symbol red">×</span></div>
+          <strong class="red-text" id="blockedMessages">0</strong>
+          <small>Blocked by security rules</small>
+        </article>
+        <article class="stat-card">
+          <div class="stat-heading"><span>TCP MESSAGES</span><span class="stat-symbol blue">⇆</span></div>
+          <strong id="tcpMessages">0</strong>
+          <small>TCP protocol activity</small>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block topology-section" id="topology">
+      <div class="section-title topology-title">
+        <div>
+          <span class="eyebrow">SDN INFRASTRUCTURE</span>
+          <h2>Live network topology</h2>
+          <p>Interactive 2D view of connected hosts and the OpenFlow core</p>
+        </div>
+        <div class="protocol-tags">
+          <span>OPENFLOW 1.3</span>
+          <span>MININET</span>
+          <span class="tag-active">TCP MONITORING</span>
+        </div>
+      </div>
+
+      <div class="topology-metrics">
+        <div><small>TOTAL DEVICES</small><strong id="deviceCount">0</strong></div>
+        <div><small>SERVERS</small><strong id="serverCount">0</strong></div>
+        <div><small>CLIENTS</small><strong id="clientCount">0</strong></div>
+        <div><small>SWITCHES</small><strong id="switchCount">0</strong></div>
+      </div>
+
+      <div class="topology-panel" id="networkScene">
+        <div class="map-grid"></div>
+        <div class="map-orbit orbit-one"></div>
+        <div class="map-orbit orbit-two"></div>
+
+        <div class="map-caption">
+          <span class="map-caption-dot"></span> SDN LOGICAL TOPOLOGY
+          <small>SELECT A DEVICE TO INSPECT</small>
+        </div>
+
+        <svg class="network-svg" id="networkSvg" viewBox="0 0 1000 470" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="lineGlow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <g id="cableLayer">
+            <path class="network-link" d="M205 145 L500 250"/>
+            <path class="network-link" d="M795 145 L500 250"/>
+            <path class="network-link" d="M795 365 L500 250"/>
+          </g>
+          <g id="packetLayer"></g>
+        </svg>
+
+        <div class="scene-content" id="sceneContent">
+          <button class="scene-device server-device" data-device="h1" type="button" style="left:20.5%;top:30%">
+            <span class="node-icon server-icon"><i></i><i></i><i></i></span>
+            <span class="scene-label"><b>h1</b><span>SERVER</span><small>10.0.0.1</small></span>
+          </button>
+
+          <button class="scene-device switch-device" data-device="s1" type="button" style="left:50%;top:53%">
+            <span class="node-icon switch-icon"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            <span class="scene-label"><b>s1</b><span>CORE SWITCH</span><small>OPENFLOW 1.3</small></span>
+          </button>
+
+          <button class="scene-device client-device client-one" data-device="h2" type="button" style="left:79.5%;top:30%">
+            <span class="node-icon client-icon"><i></i></span>
+            <span class="scene-label"><b>h2</b><span>TCP CLIENT</span><small>10.0.0.2</small></span>
+          </button>
+
+          <button class="scene-device client-device client-two" data-device="h3" type="button" style="left:79.5%;top:77%">
+            <span class="node-icon client-icon"><i></i></span>
+            <span class="scene-label"><b>h3</b><span>TCP CLIENT</span><small>10.0.0.3</small></span>
+          </button>
+
+          <div id="additionalDevices"></div>
+        </div>
+
+        <div class="map-legend">
+          <span><i class="legend-line allowed"></i> ALLOWED TRAFFIC</span>
+          <span><i class="legend-line blocked"></i> BLOCKED TRAFFIC</span>
+          <span><i class="legend-packet"></i> DATA PACKET</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="content-grid">
+      <section class="panel device-panel" id="devices">
+        <div class="panel-heading">
+          <div><span class="eyebrow">NETWORK CONFIGURATION</span><h2>Device management</h2></div>
+          <span class="connection-label" id="deviceApiStatus">CONNECTING...</span>
+        </div>
+        <p class="panel-description">Manage hosts connected to the Mininet topology.</p>
+
+        <div class="device-actions">
+          <button id="addServerBtn" class="action-button primary-button" type="button">＋ ADD SERVER</button>
+          <button id="addClientBtn" class="action-button" type="button">＋ ADD CLIENT</button>
+          <button id="refreshDevicesBtn" class="action-button refresh-button" type="button">↻ REFRESH</button>
+        </div>
+
+        <div id="deviceFeedback" class="feedback" aria-live="polite"></div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>DEVICE</th><th>ROLE</th><th>IP ADDRESS</th><th>STATUS</th><th>ACTION</th></tr></thead>
+            <tbody id="deviceTableBody"><tr><td colspan="5">Loading devices...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel inspector-panel">
+        <div class="panel-heading">
+          <div><span class="eyebrow">SELECTED NODE</span><h2>Device inspector</h2></div>
+          <span class="inspector-icon">⌖</span>
+        </div>
+
+        <div class="inspector-device">
+          <div class="inspector-glyph">▤</div>
+          <div><strong id="detailName">h1</strong><span id="detailRole">SERVER</span></div>
+        </div>
+
+        <div class="detail-row"><span>IP address</span><b id="detailIP">10.0.0.1</b></div>
+        <div class="detail-row"><span>Device status</span><b id="detailStatus">Online</b></div>
+        <div class="detail-row"><span>Protocol</span><b id="detailProtocol">TCP / OpenFlow</b></div>
+
+        <div class="inspector-note"><i></i> Select any node on the topology to view its details.</div>
+      </section>
+
+      <section class="panel analytics-panel" id="analytics">
+        <div class="panel-heading">
+          <div><span class="eyebrow">TRAFFIC INTELLIGENCE</span><h2>Traffic analytics</h2></div>
+          <span class="panel-icon">◔</span>
+        </div>
+
+        <p class="panel-description">Distribution of permitted and blocked messages.</p>
+
+        <div class="chart-layout">
+          <div class="chart-wrap">
+            <canvas id="trafficChart"></canvas>
+            <div class="chart-center"><strong id="totalMessagesCenter">LIVE</strong><small>TRAFFIC</small></div>
+          </div>
+
+          <div class="chart-legend">
+            <div><i class="legend-square allowed-square"></i><span>Allowed</span><b id="analyticsAllowed">0</b></div>
+            <div><i class="legend-square blocked-square"></i><span>Blocked</span><b id="analyticsBlocked">0</b></div>
+          </div>
+        </div>
+
+        <div class="traffic-summary">
+          <span>Allowed <b id="chartAllowed">0</b></span>
+          <span>Blocked <b id="chartBlocked">0</b></span>
+        </div>
+      </section>
+
+      <section class="panel events-panel" id="events">
+        <div class="panel-heading">
+          <div><span class="eyebrow">THREAT MONITORING</span><h2>Security event log</h2></div>
+          <span class="live-pill small-live"><i></i> LIVE FEED</span>
+        </div>
+
+        <p class="panel-description">Recent network decisions recorded by SENTINEL.</p>
+        <div class="event-list" id="eventList"><p class="empty-message">Waiting for network events...</p></div>
+      </section>
+    </div>
+
+    <footer class="main-footer">
+      <span><i></i> SENTINEL SDN MONITORING PLATFORM</span>
+      <span>OPENFLOW 1.3 · OS-KEN · MININET</span>
+    </footer>
+  </main>
+</div>
+</body>
+</html>
